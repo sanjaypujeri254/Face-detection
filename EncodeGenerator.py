@@ -7,10 +7,10 @@ from firebase_admin import credentials
 from firebase_admin import db
 from firebase_admin import  storage
 
-cred = credentials.Certificate("pythonproject-f8690-firebase-adminsdk-i0cwe-98dd801587.json")
+cred = credentials.Certificate("face-detection-3fe8d-firebase-adminsdk-bcfy7-78e44dc191.json")
 firebase_admin.initialize_app(cred, {
-    'databaseURL': "https://pythonproject-f8690-default-rtdb.firebaseio.com/",
-    'storageBucket': "pythonproject-f8690.appspot.com"
+    'databaseURL': "https://face-detection-3fe8d-default-rtdb.firebaseio.com/",
+    'storageBucket': "face-detection-3fe8d.appspot.com"
 })
 
 
