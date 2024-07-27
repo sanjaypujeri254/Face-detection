@@ -11,18 +11,18 @@ from firebase_admin import storage
 from datetime import datetime
 
 # Initialize Firebase
-cred = credentials.Certificate("pythonproject-f8690-firebase-adminsdk-i0cwe-98dd801587.json")
+cred = credentials.Certificate("face-detection-3fe8d-firebase-adminsdk-bcfy7-78e44dc191.json")
 firebase_admin.initialize_app(cred, {
-    'databaseURL': "https://pythonproject-f8690-default-rtdb.firebaseio.com/",
-    'storageBucket': "pythonproject-f8690.appspot.com"
+    'databaseURL': "https://face-detection-3fe8d-default-rtdb.firebaseio.com/",
+    'storageBucket': "face-detection-3fe8d.appspot.com"
 })
 
 bucket = storage.bucket()
 
 # Set up video capture
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(0)   
 cap.set(3, 640)
-cap.set(4, 480)
+cap.set(4, 680)
 
 if not cap.isOpened():
     print("Error: Could not open video capture.")
@@ -89,21 +89,27 @@ while True:
             if counter == 1:
                 studentInfo = db.reference(f'Students/{id}').get()
                 print(studentInfo)
-                blob = bucket.get_blob(f'Images/{id}.png')
-                array = np.frombuffer(blob.download_as_string(), np.uint8)
-                imgStudent = cv2.imdecode(array, cv2.IMREAD_COLOR)
-                datetimeObject = datetime.strptime(studentInfo['last_attendance_time'], "%Y-%m-%d %H:%M:%S")
-                secondsElapsed = (datetime.now() - datetimeObject).total_seconds()
-                print(secondsElapsed)
-                if secondsElapsed > 30:
-                    ref = db.reference(f'Students/{id}')
-                    studentInfo['total_attendance'] += 1
-                    ref.child('total_attendance').set(studentInfo['total_attendance'])
-                    ref.child('last_attendance_time').set(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                blob = bucket.get_blob(f'Images/{id}.jpeg')
+                if blob is None:
+                    print(f"Error: Blob 'Images/{id}.png' not found in the bucket.")
                 else:
-                    modeType = 3
-                    counter = 0
-                    imgBackground[44:44 + 633, 808:808 + 414] = imgModeList[modeType]
+                    try:
+                        array = np.frombuffer(blob.download_as_string(), np.uint8)
+                        imgStudent = cv2.imdecode(array, cv2.IMREAD_COLOR)
+                        datetimeObject = datetime.strptime(studentInfo['last_attendance_time'], "%Y-%m-%d %H:%M:%S")
+                        secondsElapsed = (datetime.now() - datetimeObject).total_seconds()
+                        print(secondsElapsed)
+                        if secondsElapsed > 30:
+                            ref = db.reference(f'Students/{id}')
+                            studentInfo['total_attendance'] += 1
+                            ref.child('total_attendance').set(studentInfo['total_attendance'])
+                            ref.child('last_attendance_time').set(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                        else:
+                            modeType = 3
+                            counter = 0
+                            imgBackground[44:44 + 633, 808:808 + 414] = imgModeList[modeType]
+                    except Exception as e:
+                        print(f"Error processing blob: {e}")
 
             if modeType != 3:
                 if 10 < counter < 20:
@@ -142,10 +148,13 @@ while True:
                     imgBackground[44:44 + 633, 808:808 + 414] = imgModeList[modeType]
     else:
         modeType = 0
+        imgNotRecognized = cv2.imread('Resources/Modes/5.png')
+        imgBackground[44:44 + 633, 808:808 + 414] = imgNotRecognized
         counter = 0
 
     cv2.imshow("Face Attendance", imgBackground)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
+
 cap.release()
 cv2.destroyAllWindows()
